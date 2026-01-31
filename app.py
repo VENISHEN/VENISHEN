@@ -5,6 +5,6 @@ app = Flask(__name__)
 @app.route('/user/<name>')
 def index(name):
     if name.lower() == "admin":
-        return render_template('admin.html')
+        return render_template('neon.html')
     else:
         return render_template('guest.html')
