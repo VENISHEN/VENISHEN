@@ -8,6 +8,3 @@ def index(name):
         return render_template('admin.html')
     else:
         return render_template('guest.html')
-
-if __name__ == '__main__':
-    app.run()
