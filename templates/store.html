@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyStore - Shop Now</title>
+    <link rel="stylesheet" href="/static/store.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Store Navigation -->
+    <nav class="store-nav">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-store"></i>
+                <span>MyStore</span>
+            </div>
+            <div class="nav-links">
+                <a href="/" class="nav-link active">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="#products" class="nav-link">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>Products</span>
+                </a>
+                <div class="cart-wrapper">
+                    <button class="cart-btn" id="cartButton">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count">0</span>
+                    </button>
+                    <div class="user-menu">
+                        <span>Welcome, Customer</span>
+                        <a href="/user/admin" class="admin-link">
+                            <i class="fas fa-lock"></i>
+                            <span>Admin</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1>Welcome to MyStore</h1>
+                <p class="hero-subtitle">Discover amazing products at great prices. Shop with confidence.</p>
+                <a href="#products" class="shop-now-btn">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Shop Now</span>
+                </a>
+            </div>
+            <div class="hero-image">
+                <div class="floating-icons">
+                    <div class="icon">🎧</div>
+                    <div class="icon">⌚</div>
+                    <div class="icon">💻</div>
+                    <div class="icon">☕</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section class="products-section" id="products">
+        <div class="section-header">
+            <h2>Featured Products</h2>
+            <p>Browse our collection of premium products</p>
+        </div>
+        
+        <div class="products-grid">
+            {% for product in products %}
+            <div class="product-card" data-id="{{ product.id }}">
+                <div class="product-badge" data-stock="{{ product.stock }}">
+                    {{ 'In Stock' if product.stock > 10 else 'Low Stock' if product.stock > 0 else 'Out of Stock' }}
+                </div>
+                <div class="product-image">
+                    <span class="product-emoji">{{ product.image }}</span>
+                </div>
+                <div class="product-info">
+                    <h3>{{ product.name }}</h3>
+                    <p class="product-category">{{ product.category }}</p>
+                    <p class="product-description">{{ product.description }}</p>
+                    <div class="product-footer">
+                        <div class="product-price">${{ "%.2f"|format(product.price) }}</div>
+                        <div class="product-actions">
+                            <button class="add-to-cart-btn" 
+                                    data-id="{{ product.id }}"
+                                    {% if product.stock == 0 %}disabled{% endif %}>
+                                <i class="fas fa-cart-plus"></i>
+                                <span>Add to Cart</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Cart Sidebar -->
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h3>
+                <i class="fas fa-shopping-cart"></i>
+                Your Cart
+            </h3>
+            <button class="close-cart" id="closeCart">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <!-- Cart items will be loaded here -->
+            <div class="empty-cart">
+                <i class="fas fa-shopping-cart"></i>
+                <p>Your cart is empty</p>
+                <p>Add some products to get started!</p>
+            </div>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span class="total-amount">$0.00</span>
+            </div>
+            <button class="checkout-btn" id="checkoutBtn">
+                <i class="fas fa-credit-card"></i>
+                <span>Proceed to Checkout</span>
+            </button>
+            <button class="continue-shopping-btn" id="continueShopping">
+                Continue Shopping
+            </button>
+        </div>
+    </div>
+    <div class="cart-overlay" id="cartOverlay"></div>
+
+    <!-- Footer -->
+    <footer class="store-footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>MyStore</h3>
+                <p>Your one-stop shop for all your needs. Quality products, guaranteed satisfaction.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <a href="/">Home</a>
+                <a href="#products">Products</a>
+                <a href="/user/admin">Admin Panel</a>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p><i class="fas fa-envelope"></i> support@mystore.com</p>
+                <p><i class="fas fa-phone"></i> +1 (555) 123-4567</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 MyStore. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Notification Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script src="/static/store.js"></script>
+</body>
+</html>
