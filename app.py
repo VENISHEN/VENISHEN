@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_from_directory
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 
 # Store configuration
@@ -47,6 +47,8 @@ def login():
         username = data.get('username', '').strip()
         password = data.get('password', '').strip()
         
+        print(f"Login attempt: {username}, {password}")  # Debug
+        
         # Check admin credentials
         if username == STORE_CONFIG['admin_username'] and password == STORE_CONFIG['admin_password']:
             session['is_admin'] = True
@@ -63,6 +65,7 @@ def login():
             }), 401
             
     except Exception as e:
+        print(f"Login error: {e}")  # Debug
         return jsonify({
             'success': False,
             'message': 'Server error. Please try again.'
@@ -85,11 +88,6 @@ def check_auth_status():
         'is_authenticated': session.get('is_admin', False),
         'username': session.get('username')
     })
-
-# Serve static files
-@app.route('/static/<path:filename>')
-def serve_static(filename):
-    return send_from_directory('static', filename)
 
 if __name__ == '__main__':
     app.run(debug=True)
