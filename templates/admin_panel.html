@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Store Management</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Admin Navigation -->
+    <nav class="admin-nav">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <div class="brand-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="brand-text">
+                    <h1>Admin Panel</h1>
+                    <p>Store Management System</p>
+                </div>
+            </div>
+            
+            <div class="nav-controls">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user-cog"></i>
+                    </div>
+                    <div class="user-details">
+                        <span class="user-name">Administrator</span>
+                        <span class="user-role">Super Admin</span>
+                    </div>
+                </div>
+                <button class="logout-btn" onclick="logoutAdmin()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Admin Sidebar -->
+    <div class="admin-container">
+        <aside class="admin-sidebar">
+            <div class="sidebar-menu">
+                <div class="menu-section">
+                    <h3>Dashboard</h3>
+                    <a href="#overview" class="menu-item active">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Overview</span>
+                    </a>
+                    <a href="#analytics" class="menu-item">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Analytics</span>
+                    </a>
+                </div>
+
+                <div class="menu-section">
+                    <h3>Management</h3>
+                    <a href="#products" class="menu-item">
+                        <i class="fas fa-box"></i>
+                        <span>Products</span>
+                        <span class="menu-badge">1,234</span>
+                    </a>
+                    <a href="#orders" class="menu-item">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Orders</span>
+                        <span class="menu-badge">156</span>
+                    </a>
+                    <a href="#customers" class="menu-item">
+                        <i class="fas fa-users"></i>
+                        <span>Customers</span>
+                        <span class="menu-badge">892</span>
+                    </a>
+                </div>
+
+                <div class="menu-section">
+                    <h3>System</h3>
+                    <a href="#settings" class="menu-item">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                    <a href="#security" class="menu-item">
+                        <i class="fas fa-lock"></i>
+                        <span>Security</span>
+                    </a>
+                    <a href="#logs" class="menu-item">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>Activity Logs</span>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <div class="status-indicator active"></div>
+                    <span>System Online</span>
+                </div>
+                <button class="help-btn">
+                    <i class="fas fa-question-circle"></i>
+                    <span>Help & Support</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Welcome Section -->
+            <section class="welcome-section">
+                <div class="welcome-header">
+                    <h2>Welcome back, Administrator!</h2>
+                    <p>Here's what's happening with your store today.</p>
+                </div>
+                <div class="quick-stats">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <h3>Total Revenue</h3>
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-value">$45,892</div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>12.5% increase</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <h3>Pending Orders</h3>
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-value">24</div>
+                        <div class="stat-change warning">
+                            <i class="fas fa-exclamation"></i>
+                            <span>Needs attention</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <h3>New Customers</h3>
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div class="stat-value">89</div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>8.2% growth</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <h3>Low Stock Items</h3>
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-value">7</div>
+                        <div class="stat-change negative">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>Restock needed</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recent Orders -->
+            <section class="orders-section">
+                <div class="section-header">
+                    <h3>Recent Orders</h3>
+                    <button class="view-all-btn">View All →</button>
+                </div>
+                <div class="orders-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#ORD-7890</td>
+                                <td>John Smith</td>
+                                <td>Today, 14:30</td>
+                                <td>$249.99</td>
+                                <td><span class="status-badge completed">Completed</span></td>
+                                <td>
+                                    <button class="action-btn view-btn">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#ORD-7889</td>
+                                <td>Sarah Johnson</td>
+                                <td>Today, 12:15</td>
+                                <td>$149.50</td>
+                                <td><span class="status-badge pending">Pending</span></td>
+                                <td>
+                                    <button class="action-btn process-btn">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#ORD-7888</td>
+                                <td>Mike Wilson</td>
+                                <td>Yesterday</td>
+                                <td>$89.99</td>
+                                <td><span class="status-badge shipped">Shipped</span></td>
+                                <td>
+                                    <button class="action-btn track-btn">
+                                        <i class="fas fa-shipping-fast"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Product Management -->
+            <section class="products-section">
+                <div class="section-header">
+                    <h3>Product Management</h3>
+                    <button class="add-product-btn">
+                        <i class="fas fa-plus"></i>
+                        <span>Add Product</span>
+                    </button>
+                </div>
+                <div class="products-grid">
+                    <div class="product-card">
+                        <div class="product-image">
+                            <i class="fas fa-headphones"></i>
+                        </div>
+                        <div class="product-info">
+                            <h4>Wireless Headphones</h4>
+                            <p class="product-category">Electronics</p>
+                            <div class="product-stats">
+                                <span class="price">$129.99</span>
+                                <span class="stock low">Low Stock</span>
+                            </div>
+                        </div>
+                        <div class="product-actions">
+                            <button class="edit-btn">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="delete-btn">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="product-card">
+                        <div class="product-image">
+                            <i class="fas fa-laptop"></i>
+                        </div>
+                        <div class="product-info">
+                            <h4>Gaming Laptop</h4>
+                            <p class="product-category">Computers</p>
+                            <div class="product-stats">
+                                <span class="price">$1,299.99</span>
+                                <span class="stock in-stock">In Stock</span>
+                            </div>
+                        </div>
+                        <div class="product-actions">
+                            <button class="edit-btn">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="delete-btn">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='admin.js') }}"></script>
+</body>
+</html>

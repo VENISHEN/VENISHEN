@@ -344,18 +344,18 @@ class LoginForm2 {
         this.submitBtn.style.boxShadow = '0 0 30px rgba(0, 255, 136, 0.6)';
         
         try {
-            const email = document.getElementById('email').value;
+            const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             
-            // Make actual API call to your Flask backend
-            const response = await fetch('/login', {
+            // Make API call to Flask backend
+            const response = await fetch('/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    email: email,
-                    password: password
+                    username: username,  // This should match your backend
+                    password: password   // This should match your backend
                 })
             });
             
@@ -363,12 +363,12 @@ class LoginForm2 {
             
             if (result.success) {
                 this.showSuccessMessage();
-                // Redirect to dashboard after successful login
+                // Redirect to admin panel
                 setTimeout(() => {
-                    window.location.href = '/dashboard';
+                    window.location.href = result.redirect || '/user/admin';
                 }, 1500);
             } else {
-                throw new Error(result.message);
+                throw new Error(result.message || 'Login failed');
             }
             
         } catch (error) {
