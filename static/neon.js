@@ -341,19 +341,35 @@ class LoginForm2 {
     async submitForm() {
         this.isSubmitting = true;
         this.submitBtn.classList.add('loading');
-        
-        // Add neon loading effect
         this.submitBtn.style.boxShadow = '0 0 30px rgba(0, 255, 136, 0.6)';
         
         try {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             
-            // Use shared login simulation
-            await FormUtils.simulateLogin(email, password);
+            // Make actual API call to your Flask backend
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
+            });
             
-            // Show success state
-            this.showSuccessMessage();
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showSuccessMessage();
+                // Redirect to dashboard after successful login
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 1500);
+            } else {
+                throw new Error(result.message);
+            }
             
         } catch (error) {
             console.error('Login error:', error);
