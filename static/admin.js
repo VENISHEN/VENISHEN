@@ -111,11 +111,14 @@ class AdminPanel {
         if (this.products.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="6" style="text-align: center; padding: 3rem;">
-                        <div style="color: #94a3b8;">
-                            <i class="fas fa-box-open" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                            <p>No products found</p>
-                            <p>Add your first product to get started!</p>
+                    <td colspan="6" style="text-align: center; padding: 4rem;">
+                        <div class="empty-state">
+                            <i class="fas fa-box-open"></i>
+                            <p style="font-size: 1.2rem; font-weight: 600; margin-bottom: 0.5rem;">No products found</p>
+                            <p style="color: var(--admin-text-muted); margin-bottom: 1.5rem;">Add your first product to get started!</p>
+                            <button class="btn-primary" onclick="admin.openAddModal()">
+                                <i class="fas fa-plus"></i> Add First Product
+                            </button>
                         </div>
                     </td>
                 </tr>
@@ -127,7 +130,7 @@ class AdminPanel {
         
         this.products.forEach(product => {
             const stockClass = product.stock > 10 ? 'stock-high' : 
-                              product.stock > 0 ? 'stock-medium' : 'stock-low';
+                            product.stock > 0 ? 'stock-medium' : 'stock-low';
             
             html += `
                 <tr class="product-row">

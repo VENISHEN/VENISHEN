@@ -42,18 +42,32 @@
     </style>
 </head>
 <body>
+    <!-- Background Effects -->
+    <div class="admin-bg-effects">
+        <div class="admin-glow-orb admin-glow-orb-1"></div>
+        <div class="admin-glow-orb admin-glow-orb-2"></div>
+        <div class="admin-glow-orb admin-glow-orb-3"></div>
+    </div>
     <!-- Admin Header without logout -->
     <header class="no-logout-header">
         <div class="admin-title">
-            <i class="fas fa-shield-alt"></i>
-            <div>
+            <div class="admin-title-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <div class="admin-title-text">
                 <h1>Store Admin Panel</h1>
-                <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 5px;">
-                    Session will expire when browser closes
-                </p>
+                <p>Full Product Management System</p>
             </div>
         </div>
     </header>
+
+    <div class="session-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div>
+            <strong>Security Notice:</strong> Admin session automatically ends when browser closes.
+            Please close this tab when finished for security.
+        </div>
+    </div>
     
     <div class="session-warning">
         <i class="fas fa-exclamation-triangle"></i>
@@ -85,7 +99,7 @@
                             </tr>
                         </thead>
                         <tbody id="productsTableBody">
-                            <!-- Products will be loaded here -->
+                            <!-- Products will be loaded here by JavaScript -->
                             <tr>
                                 <td colspan="6" style="text-align: center; padding: 2rem;">
                                     <div class="loading-spinner">
