@@ -80,7 +80,7 @@ def admin_page():
 
 
 # =========================
-# AUTH API (FIX FOR YOUR ERROR)
+# AUTH API
 # =========================
 
 @app.route('/api/login', methods=['POST'])
@@ -165,6 +165,54 @@ def delete_product(product_id):
 
 
 # =========================
+# CART API
+# =========================
+
+@app.route('/api/cart', methods=['GET'])
+def get_cart():
+    return jsonify({'success': True, 'cart': session.get('cart', [])})
+
+
+@app.route('/api/cart/add', methods=['POST'])
+def add_to_cart():
+    data = request.get_json()
+    product_id = data.get('product_id')
+    quantity = data.get('quantity', 1)
+
+    product = next((p for p in PRODUCTS if p['id'] == product_id), None)
+    if not product:
+        return jsonify({'success': False, 'message': 'Product not found'}), 404
+
+    cart = session.get('cart', [])
+    item = next((i for i in cart if i['id'] == product_id), None)
+
+    if item:
+        item['quantity'] = max(1, item['quantity'] + quantity)
+    else:
+        cart.append({
+            'id': product['id'],
+            'name': product['name'],
+            'price': product['price'],
+            'image': product['image'],
+            'quantity': max(1, quantity)
+        })
+
+    session['cart'] = cart
+    return jsonify({'success': True, 'cart': cart})
+
+
+@app.route('/api/cart/remove', methods=['POST'])
+def remove_from_cart():
+    data = request.get_json()
+    product_id = data.get('product_id')
+
+    cart = [i for i in session.get('cart', []) if i['id'] != product_id]
+    session['cart'] = cart
+
+    return jsonify({'success': True, 'cart': cart})
+
+
+# =========================
 # ORDERS (optional prototype)
 # =========================
 
@@ -182,17 +230,24 @@ def checkout():
     if not cart:
         return jsonify({'success': False, 'message': 'Cart empty'}), 400
 
+    total = sum(item['price'] * item['quantity'] for item in cart)
+
     order = {
         'id': get_next_order_id(),
         'items': cart,
-        'total': 0,
+        'total': total,
         'timestamp': datetime.now().isoformat()
     }
 
     ORDERS.append(order)
     session['cart'] = []
 
-    return jsonify({'success': True, 'order': order})
+    return jsonify({
+        'success': True,
+        'message': 'Order placed successfully!',
+        'order_id': order['id'],
+        'order': order
+    })
 
 
 # =========================
