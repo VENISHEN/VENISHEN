@@ -281,9 +281,10 @@ class Store {
                 this.updateCartUI();
                 this.toggleCart();
                 
-                // Show success message
+                // Show success message, then reload so stock/out-of-stock UI updates
                 setTimeout(() => {
                     alert(`🎉 ${data.message}\nOrder ID: ${data.order_id}`);
+                    window.location.reload();
                 }, 500);
             } else {
                 throw new Error(data.message);
