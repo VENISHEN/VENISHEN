@@ -11,10 +11,6 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key')
 
 db.init_db()
 
-# =========================
-# DATA (prototype storage)
-# =========================
-
 STORE_CONFIG = {
     'admin_username': 'admin',
     'admin_password': '123456'
@@ -23,17 +19,9 @@ STORE_CONFIG = {
 ORDERS = []
 
 
-# =========================
-# HELPERS
-# =========================
-
 def get_next_order_id():
     return max([o['id'] for o in ORDERS], default=1000) + 1
 
-
-# =========================
-# BEFORE REQUEST (auth guard)
-# =========================
 
 @app.before_request
 def protect_admin_api():
@@ -41,10 +29,6 @@ def protect_admin_api():
         if not session.get('is_admin'):
             return jsonify({'error': 'Unauthorized'}), 401
 
-
-# =========================
-# PAGES
-# =========================
 
 @app.route('/')
 def home():
@@ -60,28 +44,17 @@ def admin_page():
     return render_template('neon.html')
 
 
-# =========================
-# AUTH API
-# =========================
-
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
-
     username = data.get('username')
     password = data.get('password')
 
     if username == STORE_CONFIG['admin_username'] and password == STORE_CONFIG['admin_password']:
         session['is_admin'] = True
-        return jsonify({
-            'success': True,
-            'redirect': '/user/admin'
-        })
+        return jsonify({'success': True, 'redirect': '/user/admin'})
 
-    return jsonify({
-        'success': False,
-        'message': 'Invalid credentials'
-    }), 401
+    return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
 
 
 @app.route('/api/logout', methods=['POST'])
@@ -89,10 +62,6 @@ def logout():
     session.clear()
     return jsonify({'success': True})
 
-
-# =========================
-# ADMIN PRODUCT APIs
-# =========================
 
 @app.route('/admin/api/products', methods=['GET'])
 def get_products():
@@ -121,10 +90,6 @@ def api_delete_product(product_id):
     return jsonify({'success': True})
 
 
-# =========================
-# CART API
-# =========================
-
 @app.route('/api/cart', methods=['GET'])
 def get_cart():
     return jsonify({'success': True, 'cart': session.get('cart', [])})
@@ -142,16 +107,24 @@ def add_to_cart():
 
     cart = session.get('cart', [])
     item = next((i for i in cart if i['id'] == product_id), None)
+    current_qty_in_cart = item['quantity'] if item else 0
+    new_qty = max(1, current_qty_in_cart + quantity)
+
+    if new_qty > product['stock']:
+        return jsonify({
+            'success': False,
+            'message': f"Only {product['stock']} left in stock"
+        }), 400
 
     if item:
-        item['quantity'] = max(1, item['quantity'] + quantity)
+        item['quantity'] = new_qty
     else:
         cart.append({
             'id': product['id'],
             'name': product['name'],
             'price': product['price'],
             'image': product['image'],
-            'quantity': max(1, quantity)
+            'quantity': new_qty
         })
 
     session['cart'] = cart
@@ -169,10 +142,6 @@ def remove_from_cart():
     return jsonify({'success': True, 'cart': cart})
 
 
-# =========================
-# ORDERS (optional prototype)
-# =========================
-
 @app.route('/api/orders', methods=['GET'])
 def orders():
     if not session.get('is_admin'):
@@ -186,6 +155,14 @@ def checkout():
 
     if not cart:
         return jsonify({'success': False, 'message': 'Cart empty'}), 400
+
+    for item in cart:
+        current = db.get_product(item['id'])
+        if not current or current['stock'] < item['quantity']:
+            return jsonify({
+                'success': False,
+                'message': f"Not enough stock for {item['name']}"
+            }), 400
 
     total = sum(item['price'] * item['quantity'] for item in cart)
 
@@ -209,10 +186,6 @@ def checkout():
         'order': order
     })
 
-
-# =========================
-# RUN
-# =========================
 
 if __name__ == '__main__':
     app.run(debug=True)
