@@ -75,7 +75,10 @@ def get_product(product_id):
     conn.close()
     return row_to_dict(row) if row else None
 
-
+def get_stock(product_id):
+    product = get_product(product_id)
+    return product['stock'] if product else 0
+    
 def add_product(data):
     conn = get_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
