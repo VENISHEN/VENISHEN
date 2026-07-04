@@ -4,6 +4,7 @@ class AdminPanel {
         this.products = [];
         this.productToDelete = null;
         this.orderToApprove = null;
+        this.selectedImages = [];
         this.init();
     }
     
@@ -59,6 +60,9 @@ class AdminPanel {
         if (invoiceModalClose) invoiceModalClose.addEventListener('click', () => this.closeInvoiceModal());
         if (invoiceCancel) invoiceCancel.addEventListener('click', () => this.closeInvoiceModal());
         if (invoiceConfirmApprove) invoiceConfirmApprove.addEventListener('click', () => this.approveOrder());
+
+        const productPhotos = document.getElementById('productPhotos');
+        if (productPhotos) productPhotos.addEventListener('change', (e) => this.handlePhotoSelect(e));
         
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', (e) => {
@@ -104,6 +108,85 @@ class AdminPanel {
                 window.location.href = '/user/admin';
             }
         }
+    }
+
+    async handlePhotoSelect(e) {
+        const files = Array.from(e.target.files || []);
+        const remainingSlots = 5 - this.selectedImages.length;
+
+        if (files.length === 0) return;
+
+        if (files.length > remainingSlots) {
+            this.showToast(`Only ${remainingSlots} more photo(s) can be added (max 5 total)`, 'error');
+        }
+
+        const filesToProcess = files.slice(0, remainingSlots);
+
+        for (const file of filesToProcess) {
+            try {
+                const resizedDataUrl = await this.resizeImageFile(file, 1000, 0.8);
+                this.selectedImages.push(resizedDataUrl);
+            } catch (error) {
+                console.error('Image processing error:', error);
+                this.showToast(`Failed to process ${file.name}`, 'error');
+            }
+        }
+
+        this.renderPhotoPreview();
+        e.target.value = '';
+    }
+
+    resizeImageFile(file, maxDimension, quality) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    let { width, height } = img;
+
+                    if (width > maxDimension || height > maxDimension) {
+                        if (width > height) {
+                            height = Math.round((height * maxDimension) / width);
+                            width = maxDimension;
+                        } else {
+                            width = Math.round((width * maxDimension) / height);
+                            height = maxDimension;
+                        }
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    resolve(canvas.toDataURL('image/jpeg', quality));
+                };
+                img.onerror = reject;
+                img.src = event.target.result;
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    renderPhotoPreview() {
+        const grid = document.getElementById('photoPreviewGrid');
+        if (!grid) return;
+
+        grid.innerHTML = this.selectedImages.map((src, index) => `
+            <div class="photo-preview-item">
+                <img src="${src}" alt="Product photo ${index + 1}">
+                <button type="button" class="photo-preview-remove" onclick="admin.removePhoto(${index})">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `).join('');
+    }
+
+    removePhoto(index) {
+        this.selectedImages.splice(index, 1);
+        this.renderPhotoPreview();
     }
 
     async loadPendingOrders() {
@@ -307,6 +390,9 @@ class AdminPanel {
         document.querySelectorAll('input[name="emoji"]').forEach(radio => {
             radio.checked = false;
         });
+
+        this.selectedImages = [];
+        this.renderPhotoPreview();
         
         document.getElementById('productModal').classList.add('active');
     }
@@ -326,6 +412,9 @@ class AdminPanel {
         document.querySelectorAll('input[name="emoji"]').forEach(radio => {
             radio.checked = radio.value === product.image;
         });
+
+        this.selectedImages = product.images ? [...product.images] : [];
+        this.renderPhotoPreview();
         
         document.getElementById('productModal').classList.add('active');
     }
@@ -356,7 +445,8 @@ class AdminPanel {
             stock,
             category,
             image,
-            description
+            description,
+            images: this.selectedImages
         };
         
         try {
