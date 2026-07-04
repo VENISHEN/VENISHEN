@@ -72,23 +72,28 @@
                 <div class="product-badge" data-stock="{{ product.stock }}">
                     {{ 'In Stock' if product.stock > 10 else 'Low Stock' if product.stock > 0 else 'Out of Stock' }}
                 </div>
-                <div class="product-image">
-                    <span class="product-emoji">{{ product.image }}</span>
-                </div>
-                <div class="product-info">
-                    <h3>{{ product.name }}</h3>
-                    <p class="product-category">{{ product.category }}</p>
-                    <p class="product-description">{{ product.description }}</p>
-                    <div class="product-footer">
-                        <div class="product-price">${{ "%.2f"|format(product.price) }}</div>
-                        <div class="product-actions">
-                            <button class="add-to-cart-btn" 
-                                    data-id="{{ product.id }}"
-                                    {% if product.stock == 0 %}disabled{% endif %}>
-                                <i class="fas fa-cart-plus"></i>
-                                <span>Add to Cart</span>
-                            </button>
-                        </div>
+                <a href="/product/{{ product.id }}" class="product-card-link">
+                    <div class="product-image">
+                        {% if product.images and product.images|length > 0 %}
+                        <img src="{{ product.images[0] }}" alt="{{ product.name }}" class="product-photo">
+                        {% else %}
+                        <span class="product-emoji">{{ product.image }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="product-info">
+                        <h3>{{ product.name }}</h3>
+                        <p class="product-category">{{ product.category }}</p>
+                    </div>
+                </a>
+                <div class="product-footer">
+                    <div class="product-price">${{ "%.2f"|format(product.price) }}</div>
+                    <div class="product-actions">
+                        <button class="add-to-cart-btn" 
+                                data-id="{{ product.id }}"
+                                {% if product.stock == 0 %}disabled{% endif %}>
+                            <i class="fas fa-cart-plus"></i>
+                            <span>Add to Cart</span>
+                        </button>
                     </div>
                 </div>
             </div>
