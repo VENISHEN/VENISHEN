@@ -45,6 +45,9 @@ def init_db():
             );
         ''')
         cur.execute('''
+            ALTER TABLE products ADD COLUMN IF NOT EXISTS images JSONB NOT NULL DEFAULT '[]'::jsonb;
+        ''')
+        cur.execute('''
             CREATE TABLE IF NOT EXISTS orders (
                 id SERIAL PRIMARY KEY,
                 invoice_no TEXT,
@@ -84,7 +87,8 @@ def row_to_dict(row):
         'category': row['category'],
         'image': row['image'],
         'stock': row['stock'],
-        'description': row['description']
+        'description': row['description'],
+        'images': row['images'] if row['images'] else []
     }
 
 
@@ -113,12 +117,15 @@ def get_product(product_id):
 
 
 def add_product(data):
+    images = data.get('images', []) or []
+    images = images[:5]
+
     conn = get_connection()
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute('''
-            INSERT INTO products (name, price, category, image, stock, description)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            INSERT INTO products (name, price, category, image, stock, description, images)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             RETURNING *;
         ''', (
             data.get('name'),
@@ -126,7 +133,8 @@ def add_product(data):
             data.get('category'),
             data.get('image', '📦'),
             int(data.get('stock', 0)),
-            data.get('description', '')
+            data.get('description', ''),
+            psycopg2.extras.Json(images)
         ))
         row = cur.fetchone()
         conn.commit()
@@ -146,9 +154,14 @@ def update_product(product_id, data):
             cur.close()
             return None
 
+        images = data.get('images', None)
+        if images is None:
+            images = existing['images'] if existing['images'] else []
+        images = images[:5]
+
         cur.execute('''
             UPDATE products
-            SET name = %s, price = %s, category = %s, image = %s, stock = %s, description = %s
+            SET name = %s, price = %s, category = %s, image = %s, stock = %s, description = %s, images = %s
             WHERE id = %s
             RETURNING *;
         ''', (
@@ -158,6 +171,7 @@ def update_product(product_id, data):
             data.get('image', existing['image']),
             int(data.get('stock', existing['stock'])),
             data.get('description', existing['description']),
+            psycopg2.extras.Json(images),
             product_id
         ))
         row = cur.fetchone()
