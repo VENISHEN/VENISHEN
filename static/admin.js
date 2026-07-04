@@ -3,31 +3,29 @@ class AdminPanel {
     constructor() {
         this.products = [];
         this.productToDelete = null;
+        this.orderToApprove = null;
         this.init();
     }
     
     init() {
         this.setupEventListeners();
         this.loadProducts();
+        this.loadPendingOrders();
+        this.loadSalesStats();
         this.setupAuthCheck();
         this.setupTabCloseWarning();
     }
     
     setupAuthCheck() {
-        // Check if user is authenticated
         this.checkAuth().then(isAuthenticated => {
             if (!isAuthenticated) {
-                // Redirect to login if not authenticated
                 window.location.href = '/user/admin';
             }
         });
     }
     
     setupTabCloseWarning() {
-        // Warn user about session ending on tab close
         window.addEventListener('beforeunload', (e) => {
-            // This shows a warning when user tries to close the tab
-            // But we can't prevent it, just warn
             e.returnValue = 'Your admin session will end when you close this tab. Are you sure?';
         });
     }
@@ -42,13 +40,15 @@ class AdminPanel {
     }
     
     setupEventListeners() {
-        // Modal buttons
         const addProductBtn = document.getElementById('addProductBtn');
         const modalClose = document.getElementById('modalClose');
         const modalCancel = document.getElementById('modalCancel');
         const modalSave = document.getElementById('modalSave');
         const confirmCancel = document.getElementById('confirmCancel');
         const confirmDelete = document.getElementById('confirmDelete');
+        const invoiceModalClose = document.getElementById('invoiceModalClose');
+        const invoiceCancel = document.getElementById('invoiceCancel');
+        const invoiceConfirmApprove = document.getElementById('invoiceConfirmApprove');
         
         if (addProductBtn) addProductBtn.addEventListener('click', () => this.openAddModal());
         if (modalClose) modalClose.addEventListener('click', () => this.closeModal());
@@ -56,22 +56,25 @@ class AdminPanel {
         if (modalSave) modalSave.addEventListener('click', () => this.saveProduct());
         if (confirmCancel) confirmCancel.addEventListener('click', () => this.closeConfirmModal());
         if (confirmDelete) confirmDelete.addEventListener('click', () => this.deleteProduct());
+        if (invoiceModalClose) invoiceModalClose.addEventListener('click', () => this.closeInvoiceModal());
+        if (invoiceCancel) invoiceCancel.addEventListener('click', () => this.closeInvoiceModal());
+        if (invoiceConfirmApprove) invoiceConfirmApprove.addEventListener('click', () => this.approveOrder());
         
-        // Close modals on overlay click
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
                     if (modal.id === 'productModal') this.closeModal();
                     if (modal.id === 'confirmModal') this.closeConfirmModal();
+                    if (modal.id === 'invoiceModal') this.closeInvoiceModal();
                 }
             });
         });
         
-        // Close modals with Escape key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 this.closeModal();
                 this.closeConfirmModal();
+                this.closeInvoiceModal();
             }
         });
     }
@@ -81,7 +84,6 @@ class AdminPanel {
             const response = await fetch('/admin/api/products');
             
             if (response.status === 401) {
-                // Unauthorized - redirect to login
                 window.location.href = '/user/admin';
                 return;
             }
@@ -98,10 +100,127 @@ class AdminPanel {
             console.error('Error loading products:', error);
             this.showToast('Failed to load products', 'error');
             
-            // Check if it's an auth error
             if (error.message.includes('401')) {
                 window.location.href = '/user/admin';
             }
+        }
+    }
+
+    async loadPendingOrders() {
+        try {
+            const response = await fetch('/admin/api/orders/pending');
+            if (!response.ok) throw new Error('Failed to load orders');
+
+            this.pendingOrders = await response.json();
+            this.renderPendingOrders();
+        } catch (error) {
+            console.error('Error loading pending orders:', error);
+        }
+    }
+
+    async loadSalesStats() {
+        try {
+            const response = await fetch('/admin/api/stats/sales');
+            if (!response.ok) throw new Error('Failed to load sales stats');
+
+            const stats = await response.json();
+            document.getElementById('totalRevenue').textContent = `$${stats.total_revenue.toFixed(2)}`;
+            document.getElementById('totalItemsSold').textContent = stats.total_items_sold;
+        } catch (error) {
+            console.error('Error loading sales stats:', error);
+        }
+    }
+
+    renderPendingOrders() {
+        const tbody = document.getElementById('pendingOrdersBody');
+
+        if (!this.pendingOrders || this.pendingOrders.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="no-pending">
+                        <i class="fas fa-check-circle"></i> No pending orders right now.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        let html = '';
+        this.pendingOrders.forEach(order => {
+            const itemsPreview = order.items
+                .map(i => `${i.quantity}x ${i.name}`)
+                .join(', ');
+
+            const placedDate = new Date(order.created_at).toLocaleString();
+
+            html += `
+                <tr>
+                    <td><span class="invoice-badge">${order.invoice_no}</span></td>
+                    <td><span class="order-items-preview">${itemsPreview}</span></td>
+                    <td class="price-cell">$${order.total.toFixed(2)}</td>
+                    <td>${placedDate}</td>
+                    <td>
+                        <button class="approve-btn" onclick="admin.openInvoiceModal(${order.id})">
+                            <i class="fas fa-truck"></i> Review & Ship
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = html;
+    }
+
+    openInvoiceModal(orderId) {
+        const order = this.pendingOrders.find(o => o.id === orderId);
+        if (!order) return;
+
+        this.orderToApprove = orderId;
+
+        document.getElementById('invoiceNo').textContent = order.invoice_no;
+
+        let itemsHtml = '';
+        order.items.forEach(item => {
+            itemsHtml += `
+                <div class="invoice-modal-row">
+                    <span>${item.quantity} x ${item.name}</span>
+                    <span>$${(item.price * item.quantity).toFixed(2)}</span>
+                </div>
+            `;
+        });
+        document.getElementById('invoiceItemsList').innerHTML = itemsHtml;
+        document.getElementById('invoiceTotal').textContent = `$${order.total.toFixed(2)}`;
+
+        document.getElementById('invoiceModal').classList.add('active');
+    }
+
+    closeInvoiceModal() {
+        this.orderToApprove = null;
+        document.getElementById('invoiceModal').classList.remove('active');
+    }
+
+    async approveOrder() {
+        if (!this.orderToApprove) return;
+
+        try {
+            const response = await fetch(`/admin/api/orders/approve/${this.orderToApprove}`, {
+                method: 'POST'
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.showToast('Order approved and stock updated!');
+                this.closeInvoiceModal();
+                await this.loadPendingOrders();
+                await this.loadProducts();
+                await this.loadSalesStats();
+            } else {
+                throw new Error(data.message || 'Approval failed');
+            }
+        } catch (error) {
+            console.error('Approve order error:', error);
+            this.showToast(error.message || 'Failed to approve order', 'error');
         }
     }
     
@@ -185,7 +304,6 @@ class AdminPanel {
         document.getElementById('productForm').reset();
         document.getElementById('productId').value = '';
         
-        // Clear emoji selection
         document.querySelectorAll('input[name="emoji"]').forEach(radio => {
             radio.checked = false;
         });
@@ -205,7 +323,6 @@ class AdminPanel {
         document.getElementById('productCategory').value = product.category;
         document.getElementById('productDescription').value = product.description;
         
-        // Set emoji selection
         document.querySelectorAll('input[name="emoji"]').forEach(radio => {
             radio.checked = radio.value === product.image;
         });
@@ -225,11 +342,9 @@ class AdminPanel {
         const category = document.getElementById('productCategory').value;
         const description = document.getElementById('productDescription').value.trim();
         
-        // Get selected emoji
         const emojiInput = document.querySelector('input[name="emoji"]:checked');
         const image = emojiInput ? emojiInput.value : '📦';
         
-        // Validation
         if (!name || !price || price <= 0 || stock < 0 || !category) {
             this.showToast('Please fill all required fields correctly', 'error');
             return;
@@ -248,7 +363,6 @@ class AdminPanel {
             let response;
             
             if (productId) {
-                // Update existing product
                 response = await fetch(`/admin/api/products/update/${productId}`, {
                     method: 'PUT',
                     headers: {
@@ -257,7 +371,6 @@ class AdminPanel {
                     body: JSON.stringify(productData)
                 });
             } else {
-                // Add new product
                 response = await fetch('/admin/api/products/add', {
                     method: 'POST',
                     headers: {
@@ -272,7 +385,7 @@ class AdminPanel {
             if (data.success) {
                 this.showToast(`Product ${productId ? 'updated' : 'added'} successfully!`);
                 this.closeModal();
-                await this.loadProducts(); // Reload products
+                await this.loadProducts();
             } else {
                 throw new Error(data.message || 'Operation failed');
             }
@@ -306,7 +419,7 @@ class AdminPanel {
             if (data.success) {
                 this.showToast('Product deleted successfully!');
                 this.closeConfirmModal();
-                await this.loadProducts(); // Reload products
+                await this.loadProducts();
             } else {
                 throw new Error(data.message || 'Delete failed');
             }
@@ -320,17 +433,14 @@ class AdminPanel {
     showToast(message, type = 'success') {
         const toast = document.getElementById('adminToast');
         
-        // Set toast style based on type
         toast.style.background = type === 'error' ? '#ff4757' : '#00ff88';
         toast.style.color = type === 'error' ? 'white' : '#0a0a0f';
         
-        // Set icon based on type
         const icon = type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
         toast.innerHTML = `<i class="${icon}"></i> ${message}`;
         
         toast.classList.add('show');
         
-        // Hide after 3 seconds
         setTimeout(() => {
             toast.classList.remove('show');
         }, 3000);
@@ -341,9 +451,8 @@ class AdminPanel {
 let admin;
 document.addEventListener('DOMContentLoaded', () => {
     admin = new AdminPanel();
-    window.admin = admin; // Make globally accessible
+    window.admin = admin;
 });
 
-// Make functions available globally for onclick handlers
 window.editProduct = (id) => admin.editProduct(id);
 window.confirmDelete = (id) => admin.confirmDelete(id);
