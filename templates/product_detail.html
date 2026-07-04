@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.name }} - MyStore</title>
+    <link rel="stylesheet" href="/static/store.css">
+    <link rel="stylesheet" href="/static/product-detail.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Store Navigation -->
+    <nav class="store-nav">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-store"></i>
+                <span>MyStore</span>
+            </div>
+            <div class="nav-links">
+                <a href="/" class="nav-link">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="/#products" class="nav-link">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>Products</span>
+                </a>
+                <div class="cart-wrapper">
+                    <button class="cart-btn" id="cartButton">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count">0</span>
+                    </button>
+                    <div class="user-menu">
+                        <span>Welcome, Customer</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="detail-breadcrumb">
+        <a href="/">Home</a> <i class="fas fa-chevron-right"></i>
+        <span>{{ product.category }}</span> <i class="fas fa-chevron-right"></i>
+        <span>{{ product.name }}</span>
+    </div>
+
+    <!-- Product Detail Section -->
+    <section class="product-detail-section">
+        <div class="detail-container">
+
+            <!-- Gallery -->
+            <div class="detail-gallery">
+                <div class="gallery-main" id="galleryMain">
+                    {% if product.images and product.images|length > 0 %}
+                    <img src="{{ product.images[0] }}" alt="{{ product.name }}" id="mainImage" class="main-photo">
+                    {% else %}
+                    <span class="main-emoji">{{ product.image }}</span>
+                    {% endif %}
+                </div>
+
+                {% if product.images and product.images|length > 1 %}
+                <div class="gallery-thumbs">
+                    {% for img in product.images %}
+                    <div class="thumb {{ 'active' if loop.first else '' }}" data-src="{{ img }}" onclick="setMainImage(this, '{{ img }}')">
+                        <img src="{{ img }}" alt="{{ product.name }} thumbnail {{ loop.index }}">
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Info -->
+            <div class="detail-info">
+                <div class="detail-badge" data-stock="{{ product.stock }}">
+                    {{ 'In Stock' if product.stock > 10 else 'Low Stock' if product.stock > 0 else 'Out of Stock' }}
+                </div>
+
+                <h1 class="detail-name">{{ product.name }}</h1>
+                <p class="detail-category">{{ product.category }}</p>
+
+                <div class="detail-price">${{ "%.2f"|format(product.price) }}</div>
+
+                <div class="detail-stock-line">
+                    <i class="fas fa-boxes"></i>
+                    <span>{{ product.stock }} units available</span>
+                </div>
+
+                <div class="detail-description">
+                    <h3>Product Details</h3>
+                    <p>{{ product.description or 'No description available for this product.' }}</p>
+                </div>
+
+                <div class="detail-actions">
+                    <button class="add-to-cart-btn detail-add-btn"
+                            data-id="{{ product.id }}"
+                            {% if product.stock == 0 %}disabled{% endif %}>
+                        <i class="fas fa-cart-plus"></i>
+                        <span>Add to Cart</span>
+                    </button>
+                    <a href="/" class="continue-shopping-link">
+                        <i class="fas fa-arrow-left"></i> Continue Shopping
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cart Sidebar -->
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h3>
+                <i class="fas fa-shopping-cart"></i>
+                Your Cart
+            </h3>
+            <button class="close-cart" id="closeCart">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <div class="empty-cart">
+                <i class="fas fa-shopping-cart"></i>
+                <p>Your cart is empty</p>
+                <p>Add some products to get started!</p>
+            </div>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span class="total-amount">$0.00</span>
+            </div>
+            <button class="checkout-btn" id="checkoutBtn">
+                <i class="fas fa-credit-card"></i>
+                <span>Proceed to Checkout</span>
+            </button>
+            <button class="continue-shopping-btn" id="continueShopping">
+                Continue Shopping
+            </button>
+        </div>
+    </div>
+    <div class="cart-overlay" id="cartOverlay"></div>
+
+    <!-- Footer -->
+    <footer class="store-footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>MyStore</h3>
+                <p>Your one-stop shop for all your needs. Quality products, guaranteed satisfaction.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <a href="/">Home</a>
+                <a href="/#products">Products</a>
+                <a href="/user/admin">Admin Panel</a>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p><i class="fas fa-envelope"></i> support@mystore.com</p>
+                <p><i class="fas fa-phone"></i> +1 (555) 123-4567</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 MyStore. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Notification Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script src="/static/store.js"></script>
+    <script src="/static/product-detail.js"></script>
+</body>
+</html>
