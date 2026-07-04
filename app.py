@@ -16,12 +16,6 @@ STORE_CONFIG = {
     'admin_password': '123456'
 }
 
-ORDERS = []
-
-
-def get_next_order_id():
-    return max([o['id'] for o in ORDERS], default=1000) + 1
-
 
 @app.before_request
 def protect_admin_api():
@@ -142,13 +136,6 @@ def remove_from_cart():
     return jsonify({'success': True, 'cart': cart})
 
 
-@app.route('/api/orders', methods=['GET'])
-def orders():
-    if not session.get('is_admin'):
-        return jsonify({'error': 'Unauthorized'}), 401
-    return jsonify(ORDERS)
-
-
 @app.route('/api/checkout', methods=['POST'])
 def checkout():
     cart = session.get('cart', [])
@@ -165,26 +152,38 @@ def checkout():
             }), 400
 
     total = sum(item['price'] * item['quantity'] for item in cart)
+    order = db.create_order(cart, total)
 
-    for item in cart:
-        db.decrement_stock(item['id'], item['quantity'])
-
-    order = {
-        'id': get_next_order_id(),
-        'items': cart,
-        'total': total,
-        'timestamp': datetime.now().isoformat()
-    }
-
-    ORDERS.append(order)
     session['cart'] = []
 
     return jsonify({
         'success': True,
-        'message': 'Order placed successfully!',
-        'order_id': order['id'],
+        'message': 'Order placed! Waiting for approval and shipping.',
+        'order_id': order['invoice_no'],
         'order': order
     })
+
+
+# =========================
+# ADMIN ORDERS
+# =========================
+
+@app.route('/admin/api/orders/pending', methods=['GET'])
+def api_pending_orders():
+    return jsonify(db.get_pending_orders())
+
+
+@app.route('/admin/api/orders/approve/<int:order_id>', methods=['POST'])
+def api_approve_order(order_id):
+    order = db.approve_order(order_id)
+    if not order:
+        return jsonify({'success': False, 'message': 'Order not found or already processed'}), 404
+    return jsonify({'success': True, 'order': order})
+
+
+@app.route('/admin/api/stats/sales', methods=['GET'])
+def api_sales_stats():
+    return jsonify(db.get_sales_stats())
 
 
 if __name__ == '__main__':
