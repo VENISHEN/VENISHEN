@@ -1,8 +1,10 @@
 import os
+import json
 import psycopg2
 import psycopg2.extras
+from datetime import datetime
 
-DATABASE_URL = os.environ.get('DATABASE_URL')
+DATABASE_URL = os.environ.get('DATABASE_URL') or os.environ.get('POSTGRES_URL')
 
 
 def get_connection():
@@ -21,6 +23,18 @@ def init_db():
             image TEXT,
             stock INTEGER NOT NULL DEFAULT 0,
             description TEXT
+        );
+    ''')
+
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS orders (
+            id SERIAL PRIMARY KEY,
+            invoice_no TEXT,
+            items JSONB NOT NULL,
+            total NUMERIC(10,2) NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            shipped_at TIMESTAMP
         );
     ''')
     conn.commit()
@@ -75,10 +89,7 @@ def get_product(product_id):
     conn.close()
     return row_to_dict(row) if row else None
 
-def get_stock(product_id):
-    product = get_product(product_id)
-    return product['stock'] if product else 0
-    
+
 def add_product(data):
     conn = get_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -148,3 +159,103 @@ def decrement_stock(product_id, quantity):
     conn.commit()
     cur.close()
     conn.close()
+
+
+# =========================
+# ORDERS
+# =========================
+
+def order_row_to_dict(row):
+    return {
+        'id': row['id'],
+        'invoice_no': row['invoice_no'],
+        'items': row['items'],
+        'total': float(row['total']),
+        'status': row['status'],
+        'created_at': row['created_at'].isoformat() if row['created_at'] else None,
+        'shipped_at': row['shipped_at'].isoformat() if row['shipped_at'] else None
+    }
+
+
+def create_order(items, total):
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute('''
+        INSERT INTO orders (items, total, status)
+        VALUES (%s, %s, 'pending')
+        RETURNING id;
+    ''', (psycopg2.extras.Json(items), total))
+    order_id = cur.fetchone()['id']
+
+    invoice_no = f"INV-{order_id:05d}"
+    cur.execute('''
+        UPDATE orders SET invoice_no = %s WHERE id = %s
+        RETURNING *;
+    ''', (invoice_no, order_id))
+    row = cur.fetchone()
+
+    conn.commit()
+    cur.close()
+    conn.close()
+    return order_row_to_dict(row)
+
+
+def get_pending_orders():
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT * FROM orders WHERE status = 'pending' ORDER BY created_at ASC;")
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return [order_row_to_dict(r) for r in rows]
+
+
+def get_order(order_id):
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute('SELECT * FROM orders WHERE id = %s;', (order_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    return order_row_to_dict(row) if row else None
+
+
+def approve_order(order_id):
+    order = get_order(order_id)
+    if not order or order['status'] != 'pending':
+        return None
+
+    for item in order['items']:
+        decrement_stock(item['id'], item['quantity'])
+
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute('''
+        UPDATE orders SET status = 'shipped', shipped_at = NOW()
+        WHERE id = %s
+        RETURNING *;
+    ''', (order_id,))
+    row = cur.fetchone()
+    conn.commit()
+    cur.close()
+    conn.close()
+    return order_row_to_dict(row)
+
+
+def get_sales_stats():
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute('SELECT items, total FROM orders;')
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    total_revenue = sum(float(r['total']) for r in rows)
+    total_items_sold = sum(
+        item['quantity'] for r in rows for item in r['items']
+    )
+
+    return {
+        'total_revenue': total_revenue,
+        'total_items_sold': total_items_sold
+    }
