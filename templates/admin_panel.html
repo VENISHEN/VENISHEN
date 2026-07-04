@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="/static/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Add some admin-specific styles */
         .no-logout-header {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             padding: 1.5rem 2rem;
@@ -38,6 +37,60 @@
         
         .session-warning i {
             margin-right: 8px;
+        }
+
+        .order-items-preview {
+            font-size: 0.85rem;
+            color: var(--admin-text-muted, #94a3b8);
+        }
+
+        .invoice-badge {
+            font-family: monospace;
+            font-weight: 700;
+            color: #00ff88;
+        }
+
+        .approve-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(45deg, #00ff88, #00cc6a);
+            color: #0a0a0f;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .approve-btn:hover {
+            opacity: 0.9;
+        }
+
+        .no-pending {
+            text-align: center;
+            padding: 2rem;
+            color: var(--admin-text-muted, #94a3b8);
+        }
+
+        .invoice-modal-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .invoice-items-list {
+            margin: 1rem 0;
+        }
+
+        .invoice-total-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2rem;
+            font-weight: 700;
+            padding-top: 0.75rem;
+            color: #00ff88;
         }
     </style>
 </head>
@@ -76,8 +129,40 @@
     </div>
     
     <div class="admin-container">
-        <!-- Product Management Section -->
         <main class="admin-main">
+
+            <!-- Pending Orders Section -->
+            <section class="section-card">
+                <div class="section-header">
+                    <h2><i class="fas fa-truck"></i> Pending Orders</h2>
+                </div>
+
+                <div class="products-table-container">
+                    <table class="products-table">
+                        <thead>
+                            <tr>
+                                <th>Invoice No</th>
+                                <th>Items</th>
+                                <th>Total</th>
+                                <th>Placed</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingOrdersBody">
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 2rem;">
+                                    <div class="loading-spinner">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        <span>Loading orders...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Product Management Section -->
             <section class="section-card">
                 <div class="section-header">
                     <h2><i class="fas fa-boxes"></i> Product Management</h2>
@@ -99,7 +184,6 @@
                             </tr>
                         </thead>
                         <tbody id="productsTableBody">
-                            <!-- Products will be loaded here by JavaScript -->
                             <tr>
                                 <td colspan="6" style="text-align: center; padding: 2rem;">
                                     <div class="loading-spinner">
@@ -149,6 +233,24 @@
                     <div class="stat-info">
                         <h3>Low Stock</h3>
                         <p class="stat-number" id="lowStock">0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-cash-register"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Total Revenue</h3>
+                        <p class="stat-number" id="totalRevenue">$0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Total Items Sold</h3>
+                        <p class="stat-number" id="totalItemsSold">0</p>
                     </div>
                 </div>
             </section>
@@ -282,6 +384,37 @@
                 <button class="btn-secondary" id="confirmCancel">Cancel</button>
                 <button class="btn-danger" id="confirmDelete">
                     <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Approval / Invoice Modal -->
+    <div class="modal" id="invoiceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-invoice"></i> Approve Order</h3>
+                <button class="modal-close" id="invoiceModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="invoice-modal-row">
+                    <strong>Invoice No.</strong>
+                    <span class="invoice-badge" id="invoiceNo"></span>
+                </div>
+                <div class="invoice-items-list" id="invoiceItemsList">
+                    <!-- items injected here -->
+                </div>
+                <div class="invoice-total-row">
+                    <span>Total to Charge</span>
+                    <span id="invoiceTotal">$0.00</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="invoiceCancel">Cancel</button>
+                <button class="btn-primary approve-btn" id="invoiceConfirmApprove">
+                    <i class="fas fa-check"></i> Confirm & Ship
                 </button>
             </div>
         </div>
