@@ -92,6 +92,51 @@
             padding-top: 0.75rem;
             color: #00ff88;
         }
+
+        .photo-preview-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
+        .photo-preview-item {
+            position: relative;
+            width: 72px;
+            height: 72px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #334155;
+        }
+
+        .photo-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-preview-remove {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(255, 71, 87, 0.9);
+            color: white;
+            border: none;
+            font-size: 0.7rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .photo-limit-note {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -359,6 +404,14 @@
                         </label>
                         <textarea id="productDescription" rows="3" 
                                   placeholder="Enter product description"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="productPhotos">
+                            <i class="fas fa-camera"></i> Product Photos (optional, up to 5)
+                        </label>
+                        <input type="file" id="productPhotos" accept="image/*" multiple>
+                        <div class="photo-preview-grid" id="photoPreviewGrid"></div>
                     </div>
                 </form>
             </div>
