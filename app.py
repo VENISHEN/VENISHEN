@@ -30,6 +30,14 @@ def home():
     return render_template('store.html', products=products)
 
 
+@app.route('/product/<int:product_id>')
+def product_detail(product_id):
+    product = db.get_product(product_id)
+    if not product:
+        return render_template('store.html', products=db.get_all_products()), 404
+    return render_template('product_detail.html', product=product)
+
+
 @app.route('/user/admin')
 def admin_page():
     if session.get('is_admin'):
